@@ -140,7 +140,6 @@ public class DiscoveryConfiguration implements InitializingBean {
         return searchSortConfiguration;
     }
 
-    @Autowired(required = true)
     public void setSearchSortConfiguration(DiscoverySortConfiguration searchSortConfiguration) {
         this.searchSortConfiguration = searchSortConfiguration;
     }

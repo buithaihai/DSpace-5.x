@@ -166,6 +166,8 @@ public class DiscoverQueryBuilderTest {
 
         sortConfiguration.setSortFields(listSortField);
 
+        sortConfiguration.setDefaultSortField(defaultSort);
+
         discoveryConfiguration.setSearchSortConfiguration(sortConfiguration);
 
         DiscoverySearchFilterFacet subjectFacet = new DiscoverySearchFilterFacet();
@@ -273,6 +275,17 @@ public class DiscoverQueryBuilderTest {
                 discoverHitHighlightingFieldMatcher(new DiscoverHitHighlightingField("dc.title", 0, 3)),
                 discoverHitHighlightingFieldMatcher(new DiscoverHitHighlightingField("fulltext", 0, 3))
         ));
+    }
+
+
+    @Test
+    public void testSortByDefaultSort() throws Exception {
+        /* Only verify sortField, other value are covered by testSortByScore()
+         */
+        DiscoverQuery discoverQuery =
+                queryBuilder.buildQuery(context, null, discoveryConfiguration, null, null, emptyList(), 10, 20L,
+                        null, null);
+        assertThat(discoverQuery.getSortField(), is("dc.date.accessioned_sort"));
     }
 
     @Test(expected = IllegalArgumentException.class)

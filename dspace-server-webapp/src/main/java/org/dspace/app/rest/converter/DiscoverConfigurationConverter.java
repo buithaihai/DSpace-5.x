@@ -68,6 +68,8 @@ public class DiscoverConfigurationConverter
     private void addSortOptions(SearchConfigurationRest searchConfigurationRest,
                                 DiscoverySortConfiguration searchSortConfiguration) {
         if (searchSortConfiguration != null) {
+            boolean isDefaultSortOnTop = false;
+            DiscoverySortFieldConfiguration defaultSortField = searchSortConfiguration.getDefaultSortField();
             for (DiscoverySortFieldConfiguration discoverySearchSortConfiguration : CollectionUtils
                 .emptyIfNull(searchSortConfiguration.getSortFields())) {
                 SearchConfigurationRest.SortOption sortOption = new SearchConfigurationRest.SortOption();
@@ -78,7 +80,17 @@ public class DiscoverConfigurationConverter
                 }
                 sortOption.setActualName(discoverySearchSortConfiguration.getType());
                 sortOption.setSortOrder(discoverySearchSortConfiguration.getDefaultSortOrder().name());
-                searchConfigurationRest.addSortOption(sortOption);
+
+                // Set default sort option as first option of "sortOptions", to accommodate the UI behavior of using the
+                // first option as its own "default sort option"
+                if (!isDefaultSortOnTop && searchSortConfiguration.getDefaultSortField() != null
+                        && sortOption.getName().equals(defaultSortField.getMetadataField())
+                        && sortOption.getSortOrder().equals(defaultSortField.getDefaultSortOrder().name()) ) {
+                    searchConfigurationRest.addFirstSortOption(sortOption);
+                    isDefaultSortOnTop = true;
+                } else {
+                    searchConfigurationRest.addSortOption(sortOption);
+                }
             }
         }
 
