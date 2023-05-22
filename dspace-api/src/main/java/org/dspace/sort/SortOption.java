@@ -8,10 +8,9 @@
 package org.dspace.sort;
 
 import java.io.IOException;
-import java.util.Comparator;
+import java.util.Collections;
 import java.util.Set;
 import java.util.StringTokenizer;
-import java.util.TreeSet;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -69,7 +68,7 @@ public class SortOption {
     private static Set<SortOption> sortOptionsSet = null;
 
     static {
-        try {
+        /*try {
             Set<SortOption> newSortOptionsSet = new TreeSet<SortOption>(new Comparator<SortOption>() {
                 @Override
                 public int compare(SortOption sortOption, SortOption sortOption1) {
@@ -90,7 +89,8 @@ public class SortOption {
             SortOption.sortOptionsSet = newSortOptionsSet;
         } catch (SortException se) {
             log.fatal("Unable to load SortOptions", se);
-        }
+        }*/
+        sortOptionsSet= Collections.emptySet();
     }
 
     /**
