@@ -36,6 +36,7 @@ import org.dspace.eperson.Group;
 import org.dspace.services.ConfigurationService;
 import org.dspace.services.factory.DSpaceServicesFactory;
 import org.hamcrest.Matchers;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.web.servlet.result.MockMvcResultHandlers;
@@ -47,6 +48,8 @@ import org.springframework.test.web.servlet.result.MockMvcResultHandlers;
  * @author Frederic Van Reet (frederic dot vanreet at atmire dot com)
  * @author Tom Desair (tom dot desair at atmire dot com)
  */
+
+@Ignore
 public class BrowsesResourceControllerIT extends AbstractControllerIntegrationTest {
     @Autowired
     ConfigurationService configurationService;

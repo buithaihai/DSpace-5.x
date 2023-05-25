@@ -29,8 +29,6 @@ import org.dspace.core.Context;
 import org.dspace.discovery.indexobject.IndexableItem;
 import org.dspace.services.factory.DSpaceServicesFactory;
 import org.dspace.sort.OrderFormat;
-import org.dspace.sort.SortException;
-import org.dspace.sort.SortOption;
 import org.springframework.beans.factory.annotation.Autowired;
 
 /**
@@ -264,24 +262,24 @@ public class SolrServiceMetadataBrowseIndexingPlugin implements SolrServiceIndex
                     }
                 }
                 for (String facet : distFValues) {
-                    // document.addField(bi.getDistinctTableName() + "_filter", facet);
-                    // document.addField(bi.getDistinctTableName() + SOLR_FIELD_SUFFIX_FACET_PREFIXES, facet);
+                    document.addField(bi.getDistinctTableName() + "_filter", facet);
+                    document.addField(bi.getDistinctTableName() + SOLR_FIELD_SUFFIX_FACET_PREFIXES, facet);
                 }
                 for (String facet : distFAuths) {
-                    // document.addField(bi.getDistinctTableName()
-                    //                       + "_authority_filter", facet);
+                    document.addField(bi.getDistinctTableName()
+                                          + "_authority_filter", facet);
                 }
-                for (String facet : distValuesForAC) {
+                /*for (String facet : distValuesForAC) {
                     document.addField(bi.getDistinctTableName() + "_partial", facet);
                 }
                 for (String facet : distFVal) {
                     document.addField(bi.getDistinctTableName() + "_value_filter", facet);
-                }
+                }*/
             }
         }
 
         // Add sorting options as configurated for the browse system
-        try {
+        /*try {
             for (SortOption so : SortOption.getSortOptions()) {
                 List<MetadataValue> dcvalue = itemService.getMetadataByMetadataString(item, so.getMetadata());
                 if (dcvalue != null && dcvalue.size() > 0) {
@@ -294,6 +292,6 @@ public class SolrServiceMetadataBrowseIndexingPlugin implements SolrServiceIndex
         } catch (SortException e) {
             // we can't solve it so rethrow as runtime exception
             throw new RuntimeException(e.getMessage(), e);
-        }
+        }*/
     }
 }
