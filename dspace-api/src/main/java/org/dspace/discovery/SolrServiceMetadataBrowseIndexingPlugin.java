@@ -264,12 +264,12 @@ public class SolrServiceMetadataBrowseIndexingPlugin implements SolrServiceIndex
                     }
                 }
                 for (String facet : distFValues) {
-                    document.addField(bi.getDistinctTableName() + "_filter", facet);
-                    document.addField(bi.getDistinctTableName() + SOLR_FIELD_SUFFIX_FACET_PREFIXES, facet);
+                    // document.addField(bi.getDistinctTableName() + "_filter", facet);
+                    // document.addField(bi.getDistinctTableName() + SOLR_FIELD_SUFFIX_FACET_PREFIXES, facet);
                 }
                 for (String facet : distFAuths) {
-                    document.addField(bi.getDistinctTableName()
-                                          + "_authority_filter", facet);
+                    // document.addField(bi.getDistinctTableName()
+                    //                       + "_authority_filter", facet);
                 }
                 for (String facet : distValuesForAC) {
                     document.addField(bi.getDistinctTableName() + "_partial", facet);
