@@ -8,9 +8,11 @@
 package org.dspace.sort;
 
 import java.io.IOException;
-import java.util.Collections;
+import java.util.Comparator;
+import java.util.Map;
 import java.util.Set;
 import java.util.StringTokenizer;
+import java.util.TreeSet;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -18,7 +20,8 @@ import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.dspace.services.ConfigurationService;
+import org.dspace.discovery.configuration.DiscoveryBrowseConfiguration;
+import org.dspace.discovery.configuration.DiscoverySortFieldConfiguration;
 import org.dspace.services.factory.DSpaceServicesFactory;
 
 /**
@@ -68,7 +71,7 @@ public class SortOption {
     private static Set<SortOption> sortOptionsSet = null;
 
     static {
-        /*try {
+        try {
             Set<SortOption> newSortOptionsSet = new TreeSet<SortOption>(new Comparator<SortOption>() {
                 @Override
                 public int compare(SortOption sortOption, SortOption sortOption1) {
@@ -76,21 +79,22 @@ public class SortOption {
                 }
             });
             int idx = 1;
-            String option;
-
-            ConfigurationService configurationService
-                    = DSpaceServicesFactory.getInstance().getConfigurationService();
-            while (((option = configurationService.getProperty("webui.itemlist.sort-option." + idx))) != null) {
-                SortOption so = new SortOption(idx, option);
-                newSortOptionsSet.add(so);
-                idx++;
+            DiscoveryBrowseConfiguration defaultConfiguration = DSpaceServicesFactory.getInstance().getServiceManager()
+                    .getServiceByName("discoveryBrowseConfiguration", DiscoveryBrowseConfiguration.class);
+            for (Map.Entry<String, DiscoverySortFieldConfiguration> sortFieldEntry :
+                    defaultConfiguration.getBrowseSortOptions().entrySet()) {
+                if (StringUtils.isNotBlank(sortFieldEntry.getValue().getMetadataField())) {
+                    SortOption so = new SortOption(idx, sortFieldEntry.getKey(),
+                            sortFieldEntry.getValue().getMetadataField(), sortFieldEntry.getValue().getType());
+                    newSortOptionsSet.add(so);
+                    idx++;
+                }
             }
 
             SortOption.sortOptionsSet = newSortOptionsSet;
         } catch (SortException se) {
             log.fatal("Unable to load SortOptions", se);
-        }*/
-        sortOptionsSet= Collections.emptySet();
+        }
     }
 
     /**

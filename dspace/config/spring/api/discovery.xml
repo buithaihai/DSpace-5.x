@@ -44,6 +44,24 @@
     <!-- Additional indexing plugin enables searching by supervised (true,false) -->
     <bean id="solrServiceSupervisionOrderIndexingPlugin" class="org.dspace.discovery.SolrServiceSupervisionOrderIndexingPlugin"/>
 
+    <!--Bean that is used for browse rewrite-->
+    <bean id="discoveryBrowseConfiguration" class="org.dspace.discovery.configuration.DiscoveryBrowseConfiguration">
+        <property name="browseIndices">
+            <list>
+                <value>title</value>
+                <value>dateissued</value>
+                <value>dateaccessioned</value>
+            </list>
+        </property>
+        <property name="browseSortOptions">
+            <map>
+                <entry key="title" value-ref="sortTitle" />
+                <entry key="dateissued" value-ref="sortDateIssued" />
+                <entry key="dateaccessioned" value-ref="sortDateAccessioned" />
+            </map>
+        </property>
+    </bean>
+
     <!--Bean that is used for mapping communities/collections to certain discovery configurations.-->
     <bean id="org.dspace.discovery.configuration.DiscoveryConfigurationService" class="org.dspace.discovery.configuration.DiscoveryConfigurationService">
         <property name="map">

@@ -663,7 +663,9 @@ public final class BrowseIndex {
      *
      * @return an array of all the current browse indices
      * @throws BrowseException if browse error
+     * @deprecated Use another method please
      */
+    @Deprecated
     public static BrowseIndex[] getBrowseIndices()
         throws BrowseException {
         int idx = 1;
