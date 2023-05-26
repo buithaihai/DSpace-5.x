@@ -9,6 +9,7 @@ package org.dspace.discovery;
 
 import static org.dspace.discovery.SolrServiceImpl.SOLR_FIELD_SUFFIX_FACET_PREFIXES;
 
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -78,6 +79,7 @@ public class SolrServiceMetadataBrowseIndexingPlugin implements SolrServiceIndex
         // because if there are authority with variants support we want all the
         // variants to go in the facet... they are sorted by count so just the
         // prefered label is relevant
+        bis = Collections.emptyList().toArray(new BrowseIndex[0]);
         for (BrowseIndex bi : bis) {
             log.debug("Indexing for item " + item.getID() + ", for index: "
                           + bi.getTableName());
@@ -262,8 +264,8 @@ public class SolrServiceMetadataBrowseIndexingPlugin implements SolrServiceIndex
                     }
                 }
                 for (String facet : distFValues) {
-                    // document.addField(bi.getDistinctTableName() + "_filter", facet);
-                    // document.addField(bi.getDistinctTableName() + SOLR_FIELD_SUFFIX_FACET_PREFIXES, facet);
+                    document.addField(bi.getDistinctTableName() + "_filter", facet);
+                    document.addField(bi.getDistinctTableName() + SOLR_FIELD_SUFFIX_FACET_PREFIXES, facet);
                 }
                 for (String facet : distFAuths) {
                     document.addField(bi.getDistinctTableName()
