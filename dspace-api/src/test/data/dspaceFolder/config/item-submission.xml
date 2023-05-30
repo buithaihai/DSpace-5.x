@@ -23,6 +23,7 @@
         <name-map collection-handle="123456789/qualdrop-test" submission-name="qualdroptest"/>
         <name-map collection-handle="123456789/typebind-test" submission-name="typebindtest"/>
         <name-map collection-handle="123456789/accessCondition-not-discoverable" submission-name="accessConditionNotDiscoverable"/>
+        <name-map collection-handle="123456789/read-only-after-submission" submission-name="readOnlyAfterSubmission"/>
     </submission-map>
 
 
@@ -60,6 +61,12 @@
             <heading>submit.progressbar.describe.stepone</heading>
             <processing-class>org.dspace.app.rest.submit.step.DescribeStep</processing-class>
             <type>submission-form</type>
+        </step-definition>
+        <step-definition id="traditionalpageonereadonly" mandatory="true">
+            <heading>submit.progressbar.describe.stepone</heading>
+            <processing-class>org.dspace.app.rest.submit.step.DescribeStep</processing-class>
+            <type>submission-form</type>
+            <scope visibilityOutside="read-only">submission</scope>
         </step-definition>
         <step-definition id="traditionalpagetwo" mandatory="true">
             <heading>submit.progressbar.describe.steptwo</heading>
@@ -219,6 +226,12 @@
         <submission-process name="accessConditionNotDiscoverable">
             <step id="collection"/>
             <step id="traditionalpageone"/>
+            <step id="notDiscoverable"/>
+        </submission-process>
+
+        <submission-process name="readOnlyAfterSubmission">
+            <step id="collection"/>
+            <step id="traditionalpageonereadonly"/>
             <step id="notDiscoverable"/>
         </submission-process>
 

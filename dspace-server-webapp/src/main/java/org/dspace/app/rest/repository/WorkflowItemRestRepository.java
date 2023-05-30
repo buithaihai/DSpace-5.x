@@ -23,12 +23,15 @@ import org.dspace.app.rest.exception.DSpaceBadRequestException;
 import org.dspace.app.rest.exception.RESTAuthorizationException;
 import org.dspace.app.rest.exception.UnprocessableEntityException;
 import org.dspace.app.rest.model.ErrorRest;
+import org.dspace.app.rest.model.VisibilityEnum;
 import org.dspace.app.rest.model.WorkflowItemRest;
 import org.dspace.app.rest.model.patch.Operation;
 import org.dspace.app.rest.model.patch.Patch;
 import org.dspace.app.rest.submit.SubmissionService;
+import org.dspace.app.util.SubmissionConfig;
 import org.dspace.app.util.SubmissionConfigReader;
 import org.dspace.app.util.SubmissionConfigReaderException;
+import org.dspace.app.util.SubmissionStepConfig;
 import org.dspace.authorize.AuthorizeException;
 import org.dspace.authorize.service.AuthorizeService;
 import org.dspace.content.Item;
@@ -196,7 +199,7 @@ public class WorkflowItemRestRepository extends DSpaceRestRepository<WorkflowIte
         WorkflowItemRest wsi = findOne(context, id);
         XmlWorkflowItem source = wis.find(context, id);
 
-        this.checkIfEditMetadataAllowedInCurrentStep(context, source);
+        this.checkIfEditMetadataAllowedInCurrentStep(context, source, wsi);
         List<ErrorRest> errors = submissionService.uploadFileToInprogressSubmission(context, request, wsi, source,
                 file);
         wsi = converter.toRest(source, utils.obtainProjection());
@@ -216,7 +219,7 @@ public class WorkflowItemRestRepository extends DSpaceRestRepository<WorkflowIte
         WorkflowItemRest wsi = findOne(context, id);
         XmlWorkflowItem source = wis.find(context, id);
 
-        this.checkIfEditMetadataAllowedInCurrentStep(context, source);
+        this.checkIfEditMetadataAllowedInCurrentStep(context, source, wsi);
 
         for (Operation op : operations) {
             //the value in the position 0 is a null value
@@ -257,12 +260,15 @@ public class WorkflowItemRestRepository extends DSpaceRestRepository<WorkflowIte
     }
 
     /**
-     * Checks if @link{SUBMIT_EDIT_METADATA} is a valid option in the workflow step this task is currently at.
+     * Checks if @link{SUBMIT_EDIT_METADATA} is a valid option in the workflow step this task is currently at AND if
+     * workflow step is not configured to be editable.
      * Patching and uploading is only allowed if this is the case.
      * @param context               Context
      * @param xmlWorkflowItem       WorkflowItem of the task
+     * @param wsi                   the inprogress submission current rest representation
      */
-    private void checkIfEditMetadataAllowedInCurrentStep(Context context, XmlWorkflowItem xmlWorkflowItem) {
+    private void checkIfEditMetadataAllowedInCurrentStep(Context context, XmlWorkflowItem xmlWorkflowItem,
+                                                         WorkflowItemRest wsi) {
         try {
             ClaimedTask claimedTask = claimedTaskService.findByWorkflowIdAndEPerson(context, xmlWorkflowItem,
                 context.getCurrentUser());
@@ -276,6 +282,21 @@ public class WorkflowItemRestRepository extends DSpaceRestRepository<WorkflowIte
             if (!currentActionConfig.getProcessingAction().getOptions().contains(SUBMIT_EDIT_METADATA)) {
                 throw new UnprocessableEntityException(SUBMIT_EDIT_METADATA + " is not a valid option on this " +
                     "action (" + currentActionConfig.getProcessingAction().getClass() + ").");
+            }
+
+            // Prevent editing if submission step is read-only or not visible to Workflow Task's EPerson
+            SubmissionConfig submissionConfig = submissionConfigReader
+                    .getSubmissionConfigByName(wsi.getSubmissionDefinition().getName());
+            for (int i = 0; i < submissionConfig.getNumberOfSteps(); i++) {
+                SubmissionStepConfig submStepConfig = submissionConfig.getStep(i);
+                // If conditions below are met, we stop editing
+                if ("submission".equals(submStepConfig.getScope()) &&
+                        ( submStepConfig.getVisibilityOutside() == null ||
+                          VisibilityEnum.READONLY.toString().equals(submStepConfig.getVisibilityOutside()) ) ) {
+                    throw new UnprocessableEntityException(
+                            "Submission step " + submStepConfig.getId() +
+                                    " is not available outside of Submission scope");
+                }
             }
         } catch (SQLException e) {
             throw new RuntimeException("SQLException in " + this.getClass()
