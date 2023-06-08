@@ -621,8 +621,8 @@ public class RelationshipServiceImpl implements RelationshipService {
 
     @Override
     public List<Relationship> findByItem(
-        Context context, Item item, Integer limit, Integer offset, boolean excludeTilted, boolean excludeNonLatest
-    ) throws SQLException {
+        Context context, Item item, Integer limit, Integer offset, boolean excludeTilted, boolean excludeNonLatest,
+        boolean excludeNonReadable) throws SQLException {
         List<Relationship> list =
             relationshipDAO.findByItem(context, item, limit, offset, excludeTilted, excludeNonLatest);
 

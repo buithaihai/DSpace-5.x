@@ -63,6 +63,28 @@ public interface RelationshipDAO extends GenericDAO<Relationship> {
     ) throws SQLException;
 
     /**
+     * This method returns a list of Relationship objects that have the given Item object
+     * as a leftItem or a rightItem
+     *
+     * @param context            The relevant DSpace context
+     * @param item               The item that should be either a leftItem or a rightItem of all
+     *                           the Relationship objects in the returned list
+     * @param limit              paging limit
+     * @param offset             paging offset
+     * @param excludeTilted      If true, excludes tilted relationships
+     * @param excludeNonLatest   If true, excludes all relationships for which the other item has a more recent version
+     *                           that is relevant for this relationship
+     * @param excludeNonReadable If true, excludes all relationships that contain items that context.currentUser cannot
+     *                           view
+     * @return The list of Relationship objects that contain either a left or a
+     * right item that is equal to the given item
+     * @throws SQLException If something goes wrong
+     */
+    List<Relationship> findByItem(
+            Context context, Item item, Integer limit, Integer offset, boolean excludeTilted, boolean excludeNonLatest,
+            boolean excludeNonReadable) throws SQLException;
+
+    /**
      * This method returns a list of Relationship objects for the given RelationshipType object.
      * It will construct a list of all Relationship objects that have the given RelationshipType object
      * as the relationshipType property

@@ -66,9 +66,33 @@ public interface RelationshipService extends DSpaceCRUDService<Relationship> {
      *                          listed constraint
      * @throws SQLException     If something goes wrong
      */
+    default List<Relationship> findByItem(
+            Context context, Item item, Integer limit, Integer offset, boolean excludeTilted, boolean excludeNonLatest
+    ) throws SQLException {
+        return findByItem(context, item, limit, offset, excludeTilted, excludeNonLatest, false);
+    }
+
+    /**
+     * Retrieves the list of Relationships currently in the system for which the given Item is either
+     * a leftItem or a rightItem object
+     *
+     * @param context            The relevant DSpace context
+     * @param item               The Item that has to be the left or right item for the relationship to be
+     *                           included in the list
+     * @param limit              paging limit
+     * @param offset             paging offset
+     * @param excludeTilted      If true, excludes tilted relationships
+     * @param excludeNonLatest   If true, excludes all relationships for which the other item has a more recent version
+     *                           that is relevant for this relationship
+     * @param excludeNonReadable If true, excludes all relationships that contain items that context.currentUser cannot
+     *                           view
+     * @return The list of relationships for which each relationship adheres to the above
+     * listed constraint
+     * @throws SQLException If something goes wrong
+     */
     List<Relationship> findByItem(
-        Context context, Item item, Integer limit, Integer offset, boolean excludeTilted, boolean excludeNonLatest
-    ) throws SQLException;
+        Context context, Item item, Integer limit, Integer offset, boolean excludeTilted, boolean excludeNonLatest,
+        boolean excludeNonReadable) throws SQLException;
 
     /**
      * Retrieves the full list of relationships currently in the system

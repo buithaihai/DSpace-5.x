@@ -12,13 +12,17 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import javax.annotation.Nullable;
 import javax.persistence.Query;
 import javax.persistence.Tuple;
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
+import javax.persistence.criteria.Join;
 import javax.persistence.criteria.Predicate;
 import javax.persistence.criteria.Root;
 
+import org.dspace.authorize.ResourcePolicy;
+import org.dspace.authorize.ResourcePolicy_;
 import org.dspace.content.Item;
 import org.dspace.content.Item_;
 import org.dspace.content.Relationship;
@@ -30,7 +34,9 @@ import org.dspace.content.dao.pojo.ItemUuidAndRelationshipId;
 import org.dspace.content.factory.ContentServiceFactory;
 import org.dspace.content.service.RelationshipTypeService;
 import org.dspace.core.AbstractHibernateDAO;
+import org.dspace.core.Constants;
 import org.dspace.core.Context;
+import org.dspace.eperson.EPerson;
 
 public class RelationshipDAOImpl extends AbstractHibernateDAO<Relationship> implements RelationshipDAO {
 
@@ -38,12 +44,20 @@ public class RelationshipDAOImpl extends AbstractHibernateDAO<Relationship> impl
     public List<Relationship> findByItem(
         Context context, Item item, boolean excludeTilted, boolean excludeNonLatest
     ) throws SQLException {
-        return findByItem(context, item, -1, -1, excludeTilted, excludeNonLatest);
+        return findByItem(context, item, -1, -1, excludeTilted, excludeNonLatest, false);
     }
 
     @Override
     public List<Relationship> findByItem(
         Context context, Item item, Integer limit, Integer offset, boolean excludeTilted, boolean excludeNonLatest
+    ) throws SQLException {
+        return findByItem(context, item, limit, offset, excludeTilted, excludeNonLatest, false);
+    }
+
+    @Override
+    public List<Relationship> findByItem(
+        Context context, Item item, Integer limit, Integer offset, boolean excludeTilted, boolean excludeNonLatest,
+        boolean excludeNonReadable
     ) throws SQLException {
         CriteriaBuilder criteriaBuilder = getCriteriaBuilder(context);
         CriteriaQuery<Relationship> criteriaQuery = getCriteriaQuery(criteriaBuilder, Relationship.class);
@@ -52,8 +66,10 @@ public class RelationshipDAOImpl extends AbstractHibernateDAO<Relationship> impl
 
         criteriaQuery.where(
             criteriaBuilder.or(
-                getLeftItemPredicate(criteriaBuilder, relationshipRoot, item, excludeTilted, excludeNonLatest),
-                getRightItemPredicate(criteriaBuilder, relationshipRoot, item, excludeTilted, excludeNonLatest)
+                getLeftItemPredicate(criteriaBuilder, relationshipRoot, item, excludeTilted, excludeNonLatest,
+                        (excludeNonReadable ? context : null)),
+                getRightItemPredicate(criteriaBuilder, relationshipRoot, item, excludeTilted, excludeNonLatest,
+                        (excludeNonReadable ? context : null))
             )
         );
 
@@ -62,19 +78,42 @@ public class RelationshipDAOImpl extends AbstractHibernateDAO<Relationship> impl
 
     /**
      * Get the predicate for a criteria query that selects relationships by their left item.
-     * @param criteriaBuilder   the criteria builder.
-     * @param relationshipRoot  the relationship root.
-     * @param item              the item that is being searched for.
-     * @param excludeTilted     if true, exclude tilted relationships.
-     * @param excludeNonLatest  if true, exclude relationships for which the opposite item is not the latest version
-     *                          that is relevant.
+     *
+     * @param criteriaBuilder  the criteria builder.
+     * @param relationshipRoot the relationship root.
+     * @param item             the item that is being searched for.
+     * @param excludeTilted    if true, exclude tilted relationships.
+     * @param excludeNonLatest if true, exclude relationships for which the opposite item is not the latest version
+     *                         that is relevant.
      * @return a predicate that satisfies the given restrictions.
      */
     protected Predicate getLeftItemPredicate(
-        CriteriaBuilder criteriaBuilder, Root<Relationship> relationshipRoot, Item item,
-        boolean excludeTilted, boolean excludeNonLatest
-    ) {
+            CriteriaBuilder criteriaBuilder, Root<Relationship> relationshipRoot, Item item,
+            boolean excludeTilted, boolean excludeNonLatest) {
+        return getLeftItemPredicate(criteriaBuilder, relationshipRoot, item, excludeTilted, excludeNonLatest, null);
+    }
+
+    /**
+     * Get the predicate for a criteria query that selects relationships by their left item.
+     *
+     * @param criteriaBuilder  the criteria builder.
+     * @param relationshipRoot the relationship root.
+     * @param item             the item that is being searched for.
+     * @param excludeTilted    if true, exclude tilted relationships.
+     * @param excludeNonLatest if true, exclude relationships for which the opposite item is not the latest version
+     *                         that is relevant.
+     * @param optionalContext  If not null, excludes all relationships that contain items that context.currentUser
+     *                         cannot view
+     * @return a predicate that satisfies the given restrictions.
+     */
+    protected Predicate getLeftItemPredicate(
+            CriteriaBuilder criteriaBuilder, Root<Relationship> relationshipRoot, Item item,
+            boolean excludeTilted, boolean excludeNonLatest, @Nullable Context optionalContext) {
         List<Predicate> predicates = new ArrayList<>();
+
+
+        Join<Relationship, Item> leftItemJoin = relationshipRoot.join(Relationship_.LEFT_ITEM);
+        Join<Item, ResourcePolicy> itemRpJoin = leftItemJoin.join(Item_.RESOURCE_POLICIES);
 
         // match relationships based on the left item
         predicates.add(
@@ -108,6 +147,19 @@ public class RelationshipDAOImpl extends AbstractHibernateDAO<Relationship> impl
             );
         }
 
+        if (optionalContext != null) {
+            EPerson user = optionalContext.getCurrentUser();
+            predicates.add(
+                criteriaBuilder.and(
+                    criteriaBuilder.equal(itemRpJoin.get(ResourcePolicy_.actionId), Constants.READ),
+                    criteriaBuilder.or(
+                        criteriaBuilder.equal(itemRpJoin.get(ResourcePolicy_.eperson), user),
+                        itemRpJoin.get(ResourcePolicy_.epersonGroup).in(user.getGroups())
+                    )
+                )
+            );
+        }
+
         return criteriaBuilder.and(predicates.toArray(new Predicate[]{}));
     }
 
@@ -122,9 +174,28 @@ public class RelationshipDAOImpl extends AbstractHibernateDAO<Relationship> impl
      * @return a predicate that satisfies the given restrictions.
      */
     protected Predicate getRightItemPredicate(
-        CriteriaBuilder criteriaBuilder, Root<Relationship> relationshipRoot, Item item,
-        boolean excludeTilted, boolean excludeNonLatest
+            CriteriaBuilder criteriaBuilder, Root<Relationship> relationshipRoot, Item item,
+            boolean excludeTilted, boolean excludeNonLatest
     ) {
+        return getRightItemPredicate(criteriaBuilder, relationshipRoot, item, excludeTilted, excludeNonLatest, null);
+    }
+
+    /**
+     * Get the predicate for a criteria query that selects relationships by their right item.
+     *
+     * @param criteriaBuilder  the criteria builder.
+     * @param relationshipRoot the relationship root.
+     * @param item             the item that is being searched for.
+     * @param excludeTilted    if true, exclude tilted relationships.
+     * @param excludeNonLatest if true, exclude relationships for which the opposite item is not the latest version
+     *                         that is relevant.
+     * @param optionalContext  If not null, excludes all relationships that contain items that context.currentUser
+     *                         cannot view
+     * @return a predicate that satisfies the given restrictions.
+     */
+    protected Predicate getRightItemPredicate(
+            CriteriaBuilder criteriaBuilder, Root<Relationship> relationshipRoot, Item item,
+            boolean excludeTilted, boolean excludeNonLatest, Context optionalContext) {
         List<Predicate> predicates = new ArrayList<>();
 
         // match relationships based on the right item
