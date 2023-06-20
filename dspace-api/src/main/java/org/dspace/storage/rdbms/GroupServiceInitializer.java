@@ -10,6 +10,7 @@ package org.dspace.storage.rdbms;
 import org.apache.logging.log4j.Logger;
 import org.dspace.core.Context;
 import org.dspace.eperson.service.GroupService;
+import org.dspace.workflow.factory.WorkflowServiceFactory;
 import org.flywaydb.core.api.callback.Callback;
 import org.flywaydb.core.api.callback.Event;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -36,6 +37,8 @@ public class GroupServiceInitializer implements Callback {
             // While it's not really a formal "registry", we need to ensure the
             // default, required Groups exist in the DSpace database
             groupService.initDefaultGroupNames(context);
+            //DS-8641: remove workflow items with submitter == null
+            WorkflowServiceFactory.getInstance().getWorkflowItemService().deleteWFItemWithoutSubmitter(context);
             context.restoreAuthSystemState();
             // Commit changes and close context
             context.complete();
