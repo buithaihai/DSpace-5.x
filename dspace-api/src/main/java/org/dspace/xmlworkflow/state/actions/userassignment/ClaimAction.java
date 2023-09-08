@@ -45,13 +45,6 @@ import org.dspace.xmlworkflow.storedcomponents.XmlWorkflowItem;
 public class ClaimAction extends UserSelectionAction {
     private final ConfigurationService configurationService
             = DSpaceServicesFactory.getInstance().getConfigurationService();
-
-
-    private final XmlWorkflowServiceFactory factory = XmlWorkflowServiceFactory.getInstance();
-
-    private final XmlWorkflowService xmlWorkflowService = factory.getXmlWorkflowService();
-    private final XmlWorkflowFactory workflowFactory = factory.getWorkflowFactory();
-
     @Override
     public void activate(Context context, XmlWorkflowItem wfItem) throws SQLException, IOException, AuthorizeException {
         Step owningStep = getParent().getStep();
@@ -128,6 +121,11 @@ public class ClaimAction extends UserSelectionAction {
                                               .getStep().getId()) + ". The item will be sent forward to the next step");
 
             try {
+                final XmlWorkflowServiceFactory factory = XmlWorkflowServiceFactory.getInstance();
+
+                final XmlWorkflowService xmlWorkflowService = factory.getXmlWorkflowService();
+                final XmlWorkflowFactory workflowFactory = factory.getWorkflowFactory();
+
                 // Copy of org.dspace.xmlworkflow.XmlWorkflowServiceImpl#processNextStep
                 Workflow wf = workflowFactory.getWorkflow(wfi.getCollection());
 

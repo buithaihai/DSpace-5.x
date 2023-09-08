@@ -267,11 +267,12 @@ public class XmlWorkflowServiceIT extends AbstractIntegrationTestWithDatabase {
 
         // wfi should be at "editor" step
         XmlWorkflowItem wfi = workflowItemService.findByItem(context, claimedTask.getWorkflowItem().getItem());
+
+        // Claim and return the new task, we should have a pool task
         claimedTask = claimedTaskService.findByWorkflowIdAndEPerson(context, wfi, admin);
         assertEquals("editstep",claimedTask.getStepID());
         assertEquals(claimedTask.getWorkflowItem(), wfi);
 
-        // Claim and return the new task, we should have a pool task
         returnClaimedTask(claimedTask);
 
         wfi = workflowItemService.findByItem(context, claimedTask.getWorkflowItem().getItem());
